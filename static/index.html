@@ -144,6 +144,7 @@
         world[entity] = data;
         drawNextFrame(); // (but should we?)
         //XXX: Send a XHTML Request that updates the entity you just modified!
+        socket.send(JSON.stringify({ entity: data }));
       }
       var counter = 0;
       function addEntityWithoutName(data) {
@@ -270,6 +271,15 @@
         socket = new WebSocket(url);
         socket.onopen = function () {
           //XXX: TODO What are you going to do here?
+          // grab the world from server and set that as our world
+          fetch(`http://${host}/world`)
+            .then((res) => {
+              world = res.json();
+              drawNextFrame();
+            })
+            .catch((err) => {
+              console.log(err);
+            });
         };
         socket.onerror = function (msg) {
           debug("WebSocket Error:" + msg.data);
@@ -278,6 +288,12 @@
           try {
             debug("WebSocket Recv:" + msg.data);
             //XXX: TODO What are you going to do here?
+            // update the world with that entity received
+            let parsed_data = JSON.parse(msg.data);
+            for (let entity in parsed_data) {
+              world[entity] = parsed_data[entity];
+              drawNextFrame();
+            }
           } catch (e) {
             alert("socket on message: " + e);
           }
